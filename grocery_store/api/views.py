@@ -25,7 +25,6 @@ from api.serializers import (
     CategorySerializer,
     SubcategorySerializer,
     ProductSerializer,
-    ShoppingCartSerializer,
 )
 from categories.models import Category, Subcategory, Product
 from api.pagination import CategoryPagination

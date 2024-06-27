@@ -1,14 +1,12 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import  MinValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
+from django.core import validators
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFit
 
 
 User = get_user_model()
-
-ы
-def get_upload_path(instance, filename):
-    """Получить путь загрузки для изображения."""
-    return f"{instance.__class__.__name__.lower()}/{filename}"
 
 
 class Category(models.Model):
@@ -77,6 +75,25 @@ class Product(models.Model):
         validators=[MinValueValidator(0)],
         verbose_name="Цена",
     )
+    image = models.ImageField(upload_to="products")
+    image_thumbnail = ImageSpecField(
+        source="image",
+        processors=[ResizeToFit(100, 50)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    image_medium = ImageSpecField(
+        source="image",
+        processors=[ResizeToFit(300, 200)],
+        format="JPEG",
+        options={"quality": 70},
+    )
+    image_large = ImageSpecField(
+        source="image",
+        processors=[ResizeToFit(600, 400)],
+        format="JPEG",
+        options={"quality": 80},
+    )
 
     class Meta:
         verbose_name = "Товар"
@@ -84,10 +101,6 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name}, {self.slug}, {self.subcategory}, {self.price}"
-
-    @property
-    def images(self):
-        return [self.image, self.image_mid, self.image_mini]
 
 
 class ShoppingCart(models.Model):
@@ -99,11 +112,11 @@ class ShoppingCart(models.Model):
         related_name="users",
         verbose_name="Пользователь",
     )
-    product = models.ForeignKey(
+    product = models.ManyToManyField(
         Product,
         on_delete=models.CASCADE,
-        related_name="product_shopping_cart",
-        verbose_name="Товар",
+        related_name="ShoppingCart",
+        verbose_name="Продукт",
     )
 
     class Meta:
@@ -113,3 +126,30 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return f"Товар {self.product} добавлен в корзину и {self.user}"
+
+
+class ProductCart(models.model):
+    """To get product amount in cart model."""
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="product",
+        verbose_name="продукт",
+    )
+    amount = models.PositiveBigIntegerField(
+        verbose_name="Количество",
+        default=1,
+        validators=[
+            validators.MinValueValidator(1),
+            validators.MaxValueValidator(5000),
+        ],
+    )
+
+    class Meta:
+        ordering = ["product"]
+        verbose_name = "Количество продуктов"
+        verbose_name_plural = "Количество продуктов"
+
+    def __str__(self):
+        return f"В {self.product}: {self.amount}"

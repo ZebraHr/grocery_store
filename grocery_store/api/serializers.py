@@ -40,6 +40,9 @@ class CategoryForProdSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    image_thumbnail = serializers.SerializerMethodField()
+    image_medium = serializers.SerializerMethodField()
+    image_large = serializers.SerializerMethodField()
     category = CategoryForProdSerializer(read_only=True)
     subcategory = SubcategoryForProdSerializer(
         read_only=True,
@@ -53,15 +56,29 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "subcategory",
             "price",
+            "image_thumbnail",
+            "image_medium",
+            "image_large",
         )
         model = Product
+
+    def get_image_thumbnail(self, obj):
+        return obj.image_thumbnail.url if obj.image_thumbnail else None
+
+    def get_image_medium(self, obj):
+        return obj.image_medium.url if obj.image_medium else None
+
+    def get_image_large(self, obj):
+        return obj.image_large.url if obj.image_large else None
 
 
 class ShoppingCartReadSerializer(serializers.ModelSerializer):
     """Сериализатор для добавления в корзину."""
+
     pass
 
 
 class ShoppingCartCreateUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и редактирования корзины."""
+
     pass
