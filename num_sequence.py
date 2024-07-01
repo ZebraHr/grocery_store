@@ -1,14 +1,11 @@
 def num_sequence(n):
+    """Выводит n первых элементов последовательности."""
     result = []
     num = 1
-
     while len(result) < n:
         result.extend([num] * num)
         num += 1
-
-    result = result[:n]
-
-    return result
+    return result[:n]
 
 
 n = int(input("Введите число элементов последовательности n: "))
