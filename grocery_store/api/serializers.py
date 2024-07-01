@@ -1,22 +1,25 @@
-# import base64
-
-# import webcolors
-# from dataclasses import fields
-from django.core.files.base import ContentFile
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
-from django.conf import settings
 
-from categories.models import Category, Subcategory, Product
+from categories.models import (
+    Category,
+    Subcategory,
+    Product,
+    CartProduct,
+    ShoppingCart,
+)
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
+    """Сериализатор для подкатегории."""
+
     class Meta:
         exclude = ("category",)
         model = Subcategory
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Сериализатор для категории."""
+
     subcategories = SubcategorySerializer(
         many=True,
         read_only=True,
@@ -28,18 +31,32 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class SubcategoryForProdSerializer(serializers.ModelSerializer):
+    """Сериализатор для подкатегории при выводе инфорцмации по продукту."""
+
     class Meta:
         fields = ("name",)
         model = Subcategory
 
 
 class CategoryForProdSerializer(serializers.ModelSerializer):
+    """Сериализатор для категории при выводе инфорцмации по продукту."""
+
     class Meta:
         fields = ("name",)
         model = Category
 
 
+class ProductShortSerialiser(serializers.ModelSerializer):
+    """Сериализатор для вывода только названия продукта."""
+
+    class Meta:
+        fields = ("name",)
+        model = Product
+
+
 class ProductSerializer(serializers.ModelSerializer):
+    """Сериализатор по продукту."""
+
     image_thumbnail = serializers.SerializerMethodField()
     image_medium = serializers.SerializerMethodField()
     image_large = serializers.SerializerMethodField()
@@ -72,13 +89,35 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.image_large.url if obj.image_large else None
 
 
-class ShoppingCartReadSerializer(serializers.ModelSerializer):
-    """Сериализатор для добавления в корзину."""
+class CartProductSerializer(serializers.ModelSerializer):
+    """Сериализатор для вывода информации по продукту в корзине."""
 
-    pass
+    product = ProductShortSerialiser(read_only=True)
+    total_price = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CartProduct
+        fields = ("id", "product", "amount", "total_price")
 
 
-class ShoppingCartCreateUpdateSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания и редактирования корзины."""
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор корзины."""
 
-    pass
+    cart_products = CartProductSerializer(many=True, read_only=True)
+    total_amount = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShoppingCart
+        fields = ("id", "user", "cart_products", "total_amount", "total_price")
+
+    def get_total_amount(self, obj):
+        return sum(
+            cart_product.amount for cart_product in obj.cart_products.all()
+        )
+
+    def get_total_price(self, obj):
+        return sum(
+            cart_product.total_price
+            for cart_product in obj.cart_products.all()
+        )

@@ -24,14 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e5x$u4$41f+s4ks1ws$054^g&iu8+5r@w!boaw*)89)lhf8+#v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-secret-key')
 
-# DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='localhost').split(', ')
 
@@ -46,7 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'djoser',
+    'rest_framework.authtoken',
+    'imagekit',
+    'drf_yasg',
     'api.apps.ApiConfig',
     'categories.apps.CategoriesConfig',
 ]
@@ -142,13 +143,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.AllowAny',
-#     ],
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': (
 
-#         'rest_framework.authentication.TokenAuthentication',
-#     ),
-# }
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}

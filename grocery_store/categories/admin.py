@@ -1,9 +1,7 @@
-# from import_export.admin import ImportExportActionModelAdmin
 from django.contrib import admin
-from imagekit.admin import AdminThumbnail
 from django.utils.html import format_html
 
-from categories.models import Category, Subcategory, Product, ShoppingCart
+from categories.models import Category, Subcategory, Product
 
 
 @admin.register(Category)
@@ -39,9 +37,3 @@ class ProductAdmin(admin.ModelAdmin):
         return "No Image"
 
     admin_thumbnail.short_description = "Thumbnail"
-
-
-# @admin.register(ShoppingCart)
-# class ShoppingCartAdmin(admin.ModelAdmin):
-#     list_display = ("id", "user", "product")
-#     list_filter = ("product",)

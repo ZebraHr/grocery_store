@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.core import validators
 from imagekit.models import ImageSpecField
@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 class Category(models.Model):
-    """Category model."""
+    """Модель категории."""
 
     name = models.CharField("Название", max_length=200)
     slug = models.SlugField("Slug-имя", max_length=50, unique=True)
@@ -28,7 +28,7 @@ class Category(models.Model):
 
 
 class Subcategory(models.Model):
-    """Subcategory model."""
+    """Модель подкатегории."""
 
     name = models.CharField("Название", max_length=200)
     slug = models.SlugField("Slug-имя", max_length=50, unique=True)
@@ -53,7 +53,7 @@ class Subcategory(models.Model):
 
 
 class Product(models.Model):
-    """Product model."""
+    """Модель продукта."""
 
     name = models.CharField("Название", max_length=200)
     slug = models.SlugField("Slug-имя", max_length=50, unique=True)
@@ -104,52 +104,59 @@ class Product(models.Model):
 
 
 class ShoppingCart(models.Model):
-    """Shopping Cart model."""
+    """Модель корзины."""
 
     user = models.ForeignKey(
         User,
+        null=True,
         on_delete=models.CASCADE,
-        related_name="users",
+        related_name="carts",
         verbose_name="Пользователь",
-    )
-    product = models.ManyToManyField(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="ShoppingCart",
-        verbose_name="Продукт",
     )
 
     class Meta:
-        ordering = ["product"]
+        ordering = ["user"]
         verbose_name = "Корзина"
         verbose_name_plural = "Корзины"
 
     def __str__(self):
-        return f"Товар {self.product} добавлен в корзину и {self.user}"
+        return f"Корзина пользователя {self.user}"
 
 
-class ProductCart(models.model):
-    """To get product amount in cart model."""
+class CartProduct(models.Model):
+    """Модель для вывода количества продукта в корзине."""
 
+    cart = models.ForeignKey(
+        ShoppingCart,
+        on_delete=models.CASCADE,
+        related_name="cart_products",
+        verbose_name="Корзина",
+    )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name="product",
-        verbose_name="продукт",
+        related_name="cart_products",
+        verbose_name="Продукт",
     )
-    amount = models.PositiveBigIntegerField(
+    amount = models.PositiveIntegerField(
         verbose_name="Количество",
         default=1,
-        validators=[
-            validators.MinValueValidator(1),
-            validators.MaxValueValidator(5000),
-        ],
+        validators=[MinValueValidator(1), MaxValueValidator(5000)],
     )
 
     class Meta:
-        ordering = ["product"]
-        verbose_name = "Количество продуктов"
-        verbose_name_plural = "Количество продуктов"
+        ordering = ["cart"]
+        verbose_name = "Корзина-товар"
+        verbose_name_plural = "Корзина-товары"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cart", "product"], name="unique_cart_product"
+            )
+        ]
 
     def __str__(self):
-        return f"В {self.product}: {self.amount}"
+        return f"{self.product.name}: {self.amount}"
+
+    @property
+    def total_price(self):
+        return self.product.price * self.amount
